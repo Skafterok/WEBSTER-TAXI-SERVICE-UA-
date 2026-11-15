@@ -50,7 +50,7 @@ button:disabled{opacity:.5}
 <script>
 const tg = window.Telegram && window.Telegram.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
-const SEND = false; // позже включим отправку заказа боту
+const inTG = !!(tg && tg.initData);
 const $ = id => document.getElementById(id);
 let from = null, result = null;
 
@@ -141,9 +141,11 @@ async function calc() {
 
 function order() {
   if (!result) return;
-  if (SEND && tg) { tg.sendData(JSON.stringify(result)); return; }
-  const t = "Тестовая версия: заказ пока не отправляется.\n\n" + result.from + " → " + result.to + "\n~" + result.km + " км, ~" + result.price + " грн";
-  if (tg && tg.showAlert) tg.showAlert(t); else alert(t);
+  if (inTG) {
+    tg.sendData(JSON.stringify(result));
+    return;
+  }
+  alert("Тест в браузере: заказ не отправляется.\n\n" + result.from + " → " + result.to + "\n~" + result.km + " км, ~" + result.price + " грн\n\nВнутри Telegram эта кнопка отправит заказ боту.");
 }
 
 $("from").addEventListener("input", () => { from = null; $("fromHint").textContent = ""; });
