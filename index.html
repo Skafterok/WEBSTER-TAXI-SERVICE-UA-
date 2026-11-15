@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -11,7 +11,8 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx);padding:18px 16px 28px}
 .logo{display:block;width:104px;height:104px;border-radius:50%;object-fit:cover;margin:6px auto 10px;box-shadow:0 0 26px rgba(255,140,0,.35)}
-h1{font-size:24px;text-align:center;margin:0 0 18px;letter-spacing:.3px}
+h1{font-size:24px;text-align:center;margin:0 0 4px;letter-spacing:.3px}
+.sub{text-align:center;font-size:14px;color:var(--hint);margin:0 0 18px}
 .group{background:var(--card);border-radius:14px;overflow:hidden}
 .row{display:flex;gap:10px;align-items:center;padding:9px 14px}
 .row+.row{border-top:1px solid rgba(128,128,128,.22)}
@@ -24,7 +25,6 @@ input::placeholder{font-style:italic;font-weight:300;color:var(--hint);opacity:.
 button{width:100%;border:0;border-radius:12px;padding:13px;font-size:16px;font-weight:600;background:var(--btn);color:var(--btx);margin-top:10px}
 button:disabled{opacity:.5}
 .res{background:var(--card);border-radius:14px;padding:12px 16px;margin-top:12px}
-.res .top{display:flex;justify-content:space-between;align-items:baseline}
 .price{font-size:30px;font-weight:700}
 .err{color:#d93025;margin-top:10px;font-size:14px;text-align:center}
 </style>
@@ -32,28 +32,29 @@ button:disabled{opacity:.5}
 <body>
 <img class="logo" src="WebsterLogo.jpg" alt="" onerror="this.style.display='none'">
 <h1>Webster Taxi</h1>
+<p class="sub">Вітаємо вас! 🚕 Вкажіть, куди поїдемо</p>
 
 <div class="group">
   <div class="row">
     <span class="ico">📍</span>
-    <div class="f"><label>Откуда</label><input id="from" placeholder="Улица и номер дома" autocomplete="off"></div>
+    <div class="f"><label>Звідки</label><input id="from" placeholder="Вулиця та номер будинку" autocomplete="off"></div>
   </div>
   <div class="row">
     <span class="ico">🏁</span>
-    <div class="f"><label>Куда</label><input id="to" placeholder="Например: улица Заводская 50" autocomplete="off"></div>
+    <div class="f"><label>Куди</label><input id="to" placeholder="Наприклад: вулиця Заводська 50" autocomplete="off"></div>
   </div>
 </div>
 <div class="hint" id="fromHint"></div>
 
-<button id="calcBtn" onclick="calc()">Рассчитать стоимость</button>
+<button id="calcBtn" onclick="calc()">Розрахувати вартість</button>
 
 <div id="res" style="display:none">
   <div class="res">
-    <div class="top"><label>💰 Стоимость поездки</label></div>
+    <label>💰 Вартість поїздки</label>
     <div class="price" id="price"></div>
     <div class="hint" id="dist" style="margin:2px 0 0"></div>
   </div>
-  <button id="orderBtn" onclick="order()">✅ Заказать такси</button>
+  <button id="orderBtn" onclick="order()">✅ Замовити таксі</button>
 </div>
 
 <div class="err" id="err"></div>
@@ -80,27 +81,27 @@ function shortAddr(a) {
 }
 
 function locate() {
-  $("fromHint").textContent = "Определяем ваше местоположение…";
+  $("fromHint").textContent = "Визначаємо ваше місцезнаходження…";
   if (!navigator.geolocation) {
-    $("fromHint").textContent = "Геолокация недоступна — введите адрес вручную";
+    $("fromHint").textContent = "Геолокація недоступна — введіть адресу вручну";
     return;
   }
   navigator.geolocation.getCurrentPosition(async p => {
     from = { lat: p.coords.latitude, lon: p.coords.longitude };
     try {
-      const d = await getJSON("https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=ru&lat=" + from.lat + "&lon=" + from.lon);
+      const d = await getJSON("https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=uk&lat=" + from.lat + "&lon=" + from.lon);
       $("from").value = shortAddr(d.address || {});
-      $("fromHint").textContent = "Определено по геолокации";
+      $("fromHint").textContent = "Визначено за геолокацією";
     } catch (e) {
-      $("fromHint").textContent = "Координаты получены, адрес не определён — введите вручную";
+      $("fromHint").textContent = "Координати отримано, адресу не визначено — введіть вручну";
     }
   }, () => {
-    $("fromHint").textContent = "Не удалось определить место — введите адрес вручную";
+    $("fromHint").textContent = "Не вдалося визначити місце — введіть адресу вручну";
   }, { enableHighAccuracy: true, timeout: 15000 });
 }
 
 async function geocode(text, near) {
-  const base = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=ru&q=" + encodeURIComponent(text);
+  const base = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=uk&q=" + encodeURIComponent(text);
   const tries = near
     ? [base + "&viewbox=" + (near.lon - 0.3) + "," + (near.lat + 0.3) + "," + (near.lon + 0.3) + "," + (near.lat - 0.3) + "&bounded=1", base]
     : [base];
@@ -129,25 +130,25 @@ async function calc() {
   const fromText = $("from").value.trim(), toText = $("to").value.trim();
   $("err").textContent = "";
   $("res").style.display = "none";
-  if (!fromText || !toText) { $("err").textContent = "Введите оба адреса."; return; }
+  if (!fromText || !toText) { $("err").textContent = "Введіть обидві адреси."; return; }
   $("calcBtn").disabled = true;
-  $("calcBtn").textContent = "⏳ Секундочку, считаем…";
+  $("calcBtn").textContent = "⏳ Хвилинку, рахуємо вартість…";
   try {
     let a = from || await geocode(fromText, null);
-    if (!a) { $("err").textContent = "⚠️ Возможно, адреса подачи не существует."; return; }
+    if (!a) { $("err").textContent = "⚠️ Можливо, адреси подачі не існує."; return; }
     const b = await geocode(toText, a);
-    if (!b) { $("err").textContent = "⚠️ Возможно, такого адреса не существует. Проверьте и попробуйте ещё раз."; return; }
+    if (!b) { $("err").textContent = "⚠️ Можливо, такої адреси не існує. Перевірте та спробуйте ще раз."; return; }
     const km = await routeKm(a, b);
     result = { from: fromText, to: toText, km: Math.round(km * 10) / 10, price: priceFor(km), lat: a.lat, lon: a.lon };
     $("price").textContent = "~" + result.price + " грн";
-    $("dist").textContent = "Расстояние: ~" + result.km + " км";
+    $("dist").textContent = "Відстань: ~" + result.km + " км";
     $("res").style.display = "block";
     $("res").scrollIntoView({ behavior: "smooth", block: "end" });
   } catch (e) {
-    $("err").textContent = "Не удалось рассчитать. Проверьте интернет и попробуйте ещё раз.";
+    $("err").textContent = "Не вдалося розрахувати. Перевірте інтернет і спробуйте ще раз.";
   } finally {
     $("calcBtn").disabled = false;
-    $("calcBtn").textContent = "Рассчитать стоимость";
+    $("calcBtn").textContent = "Розрахувати вартість";
   }
 }
 
@@ -157,7 +158,7 @@ function order() {
     tg.sendData(JSON.stringify(result));
     return;
   }
-  alert("Тест в браузере: заказ не отправляется.\n\n" + result.from + " → " + result.to + "\n~" + result.km + " км, ~" + result.price + " грн\n\nВнутри Telegram эта кнопка отправит заказ боту.");
+  alert("Тест у браузері: замовлення не надсилається.\n\n" + result.from + " → " + result.to + "\n~" + result.km + " км, ~" + result.price + " грн\n\nУсередині Telegram ця кнопка надішле замовлення боту.");
 }
 
 $("from").addEventListener("input", () => { from = null; $("fromHint").textContent = ""; });
