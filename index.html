@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Webster Taxi</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+/* Фон і картки задані самі (нейтральний сірий), не залежать від теми Telegram. Змінити колір фону: --bg */
+:root{--bg:#2b2e33;--card:#383c43;--tx:#f2f2f2;--hint:#a3a7ae;--btn:#2481cc;--btx:#fff}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx);padding:12px 14px 90px}
+button{font-family:inherit}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.top img{width:40px;height:40px;border-radius:50%;object-fit:cover;box-shadow:0 0 12px rgba(255,140,0,.4)}
+.top b{font-size:18px}
+.seg{display:flex;background:var(--card);border-radius:12px;padding:3px;margin-bottom:8px}
+.seg button{flex:1;border:0;padding:9px;font-size:14px;font-weight:600;background:transparent;color:var(--tx);border-radius:10px}
+.seg button.on{background:var(--btn);color:var(--btx)}
+.demo{font-size:12px;color:var(--hint);text-align:center;margin:0 0 8px}
+.card{background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.row2{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.lbl{font-size:12px;color:var(--hint)}
+.val{font-weight:600;margin-bottom:4px}
+.big{font-size:22px;font-weight:700}
+.timer{font-size:44px;font-weight:700;text-align:center;margin:6px 0 2px;letter-spacing:1px}
+.bar{height:8px;background:rgba(128,128,128,.25);border-radius:6px;overflow:hidden;margin:8px 0 6px}
+.bar i{display:block;height:100%;width:0;background:var(--btn);transition:width .9s linear}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:12px;font-size:16px;font-weight:600;background:var(--btn);color:var(--btx);margin-top:8px;text-align:center;text-decoration:none}
+.btn.sec{background:transparent;color:var(--btn);border:1px solid var(--btn);font-size:14px;padding:9px}
+.btn.red{background:#d93025;color:#fff}
+.btn.green{background:#2e9d57;color:#fff}
+.btn:disabled{opacity:.45}
+.glow{animation:glow 1.4s infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(46,157,87,.7)}50%{box-shadow:0 0 0 9px rgba(46,157,87,0)}}
+.half{display:flex;gap:8px}
+.half .btn{margin-top:0}
+.chips{display:flex;gap:6px;margin-top:6px}
+.chip{flex:1;border:1px solid rgba(160,160,160,.5);background:transparent;color:var(--tx);border-radius:10px;padding:8px 0;font-size:14px}
+.chip.on{background:var(--btn);color:var(--btx);border-color:var(--btn)}
+.badge{display:inline-block;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:600;color:#fff}
+.empty{text-align:center;color:var(--hint);padding:34px 10px;line-height:1.5}
+.okcard{background:rgba(46,157,87,.22)}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid rgba(128,128,128,.25);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
+nav button{flex:1;border:0;background:transparent;color:var(--hint);font-size:12px;padding:4px 0}
+nav button.on{color:var(--btn);font-weight:600}
+nav .ic{display:block;font-size:20px}
+h1{font-size:22px;text-align:center;margin:0 0 4px}
+.sub{text-align:center;font-size:14px;color:var(--hint);margin:0 0 14px}
+.group{background:var(--card);border-radius:14px;overflow:hidden}
+.row{display:flex;gap:10px;align-items:center;padding:9px 14px}
+.row+.row{border-top:1px solid rgba(128,128,128,.22)}
+.f{flex:1;min-width:0}
+label{display:block;font-size:12px;color:var(--hint)}
+input{width:100%;border:0;background:transparent;color:var(--tx);font-size:16px;font-weight:600;padding:2px 0;outline:none;font-family:inherit}
+input::placeholder{font-style:italic;font-weight:300;color:var(--hint);opacity:.7}
+.hint{font-size:12px;color:var(--hint);min-height:16px;margin:6px 4px 0}
+.err{color:#ff6b60;margin-top:10px;font-size:14px;text-align:center}
+.price{font-size:30px;font-weight:700}
+.pf label{margin-top:8px}
+.pf input{border-bottom:1px solid rgba(128,128,128,.4)}
+/* Картка в ефірі: ширша (виходить за поля екрана) і шрифт на ~20% більший */
+.ac{padding:10px 12px;margin:8px -6px 0}
+.top2{display:flex;justify-content:space-between;gap:10px}
+.addr{flex:1;min-width:0;font-size:17px}
+.a{line-height:1.25;margin-bottom:4px}
+.pr{text-align:right;white-space:nowrap}
+.pr .big{font-size:24px}
+.dd{font-size:13px;color:var(--hint);margin-top:3px}
+.ac .eta{display:flex;align-items:center;gap:8px;margin-top:6px}
+.ac .eta .lbl{white-space:nowrap;font-size:14px}
+.ac .chips{flex:1;margin-top:0}
+.ac .chip{padding:5px 0;font-size:15px}
+.ac .btn{margin-top:7px;padding:9px;font-size:17px}
+</style>
+</head>
+<body>
+<div class="top"><img src="WebsterLogo.jpg" alt="" onerror="this.style.display='none'"><b>Webster Taxi</b></div>
+<div id="demoBar" style="display:none">
+  <div class="seg" id="seg"></div>
+  <p class="demo">Демо-режим: обидві ролі на одному екрані. Швидкість часу:</p>
+  <div class="chips" id="spd" style="margin:0 0 12px"></div>
+</div>
+
+<div id="orderForm">
+  <h1>Вітаємо Вас! 🚕</h1>
+  <p class="sub">Вкажіть, куди поїдемо</p>
+  <div class="group">
+    <div class="row"><span>📍</span><div class="f"><label>Звідки</label><input id="from" placeholder="Вулиця та номер будинку" autocomplete="off"></div></div>
+    <div class="row"><span>🏁</span><div class="f"><label>Куди</label><input id="to" placeholder="Наприклад: вулиця Заводська 50" autocomplete="off"></div></div>
+  </div>
+  <div class="hint" id="fromHint"></div>
+  <button class="btn" id="calcBtn" onclick="A.calc()">Розрахувати вартість</button>
+  <div id="res" style="display:none">
+    <div class="card" style="margin-top:12px">
+      <label>💰 Вартість поїздки</label>
+      <div class="price" id="price"></div>
+      <div class="hint" id="dist" style="margin:2px 0 0"></div>
+    </div>
+    <button class="btn" onclick="A.order()">✅ Замовити таксі</button>
+  </div>
+  <div class="err" id="err"></div>
+</div>
+
+<div id="view"></div>
+<nav id="tabs"></nav>
+
+<script>
+"use strict";
+/* ================================================================
+   WEBSTER TAXI — клієнтський застосунок (тестова версія, цикл 3)
+   Шари:  CONFIG → утиліти → Session → Store → Timing/Tariff → Geo →
+          Orders (бізнес-логіка) → Views (пасажир / водій) → UI → Actions
+   Усі дані зараз у localStorage. Для сервера достатньо замінити
+   Store (і Geo за потреби) на реалізацію з тим самим інтерфейсом.
+   Мова: лише українська (англійська — у відкладених завданнях).
+   ================================================================ */
+
+/* ---------- 1. Конфігурація ---------- */
+const CONFIG = {
+  tariff: {basePrice: 150, baseKm: 2, perKm: 16},   // 150 грн за перші 2 км, далі 16 грн/км (0,5 км = 8 грн)
+  avgSpeedKmh: 25,                                  // для тривалості поїздки в емуляції
+  etaOptions: [3, 5, 10],                           // варіанти «буду через N хв»
+  speedOptions: [1, 5, 20],                         // прискорення часу в демо
+  defaultLoc: {lat: 48.4647, lon: 35.0462},         // центр Дніпра
+  storageKey: "wt_demo_v2",
+  offlineFallback: true,                            // тестовий розрахунок без інтернету
+  bgColor: "#2b2e33"                                // має збігатися з --bg у CSS (колір шапки Telegram)
+};
+
+/* ---------- 2. Утиліти ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const rad = Math.PI / 180;
+const hav = (a, b) => {
+  const h = Math.sin((b.lat - a.lat) * rad / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin((b.lon - a.lon) * rad / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+};
+const roadKm = (a, b) => hav(a, b) * 1.3;
+const num1 = k => (Math.round(k * 10) / 10).toFixed(1).replace(".", ",");
+const fmtKm = k => num1(k) + " км";
+const fmtT = s => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+const hhmm = t => new Date(t).toLocaleTimeString("uk-UA", {hour: "2-digit", minute: "2-digit"});
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const telHref = p => "tel:" + String(p).replace(/[^+\d]/g, "");
+const notify = msg => {
+  const w = window.Telegram && window.Telegram.WebApp;
+  try { if (w && w.showAlert) { w.showAlert(msg); return; } } catch (e) {}
+  alert(msg);
+};
+
+/* ---------- 3. Сесія: роль і вкладки ---------- */
+// TODO(server): роль визначатиметься за Telegram ID та статусом підтвердження водія, а не за параметром адреси.
+const Q = new URLSearchParams(location.search);
+const Session = {
+  demo: Q.get("demo") === "1",                       // ?demo=1 — обидві ролі з перемикачем
+  role: Q.get("role") === "driver" ? "drv" : "pass", // ?role=driver — кабінет водія; інакше — пасажир
+  tab: {pass: "order", drv: "air"}
+};
+const TG = (() => {
+  const w = window.Telegram && window.Telegram.WebApp;
+  if (w) {
+    try { w.ready(); w.expand(); } catch (e) {}
+    try { w.setHeaderColor(CONFIG.bgColor); w.setBackgroundColor(CONFIG.bgColor); } catch (e) {}
+  }
+  const u = w && w.initDataUnsafe && w.initDataUnsafe.user;
+  return {webapp: w, name: u && u.first_name ? u.first_name : "Пасажир (демо)"};
+})();
+
+/* ---------- 4. Сховище (адаптер). Інтерфейс: get / update / subscribe ---------- */
+const LocalStore = {
+  _s: null, _subs: [],
+  _default: () => ({orders: [], seq: 1, speed: 1, loc: Object.assign({}, CONFIG.defaultLoc),
+    driver: {name: "Олег (демо)", car: "Toyota Camry", color: "білий", plate: "AA 1234 BB", phone: "+380 50 000 00 00"}}),
+  _read() {
+    try { return Object.assign(this._default(), JSON.parse(localStorage.getItem(CONFIG.storageKey) || "{}")); }
+    catch (e) { return this._default(); }
+  },
+  get() { if (!this._s) this._s = this._read(); return this._s; },
+  async update(fn) {                    // читає свіжий стан → змінює → зберігає → сповіщає
+    const s = this._read();
+    const result = fn(s);
+    try { localStorage.setItem(CONFIG.storageKey, JSON.stringify(s)); } catch (e) {}
+    this._s = s; this._emit();
+    return result;
+  },
+  subscribe(cb) { this._subs.push(cb); },
+  _emit() { this._subs.forEach(cb => { try { cb(this._s); } catch (e) {} }); },
+  init() {                              // синхронізація між вкладками (пасажир і водій у різних вкладках)
+    window.addEventListener("storage", e => { if (e.key === CONFIG.storageKey) { this._s = this._read(); this._emit(); } });
+  }
+};
+const Store = LocalStore;               // TODO(server): RemoteStore з тим самим інтерфейсом
+
+/* ---------- 5. Тариф і таймінги ---------- */
+const Tariff = {
+  price(km) {
+    const t = CONFIG.tariff;
+    return t.basePrice + Math.ceil(Math.max(0, km - t.baseKm) * 2) * (t.perKm / 2);
+  }
+};
+const Timing = {
+  speed: () => Store.get().speed || 1,
+  rideMin: o => Math.max(3, Math.round(o.km / CONFIG.avgSpeedKmh * 60)),
+  arrLeft: (o, sp = Timing.speed()) => Math.max(0, o.eta * 60 - (Date.now() - o.acceptedAt) / 1000 * sp),
+  rideLeft: (o, sp = Timing.speed()) => Math.max(0, Timing.rideMin(o) * 60 - (Date.now() - o.startedAt) / 1000 * sp),
+  // Кнопка «На місці» стає активною не раніше, ніж через половину заданого часу подачі (3→1 хв, 5→2 хв, 10→5 хв)
+  unlockSec: o => Math.floor(o.eta / 2) * 60,
+  elapsed: (o, sp = Timing.speed()) => (Date.now() - o.acceptedAt) / 1000 * sp,
+  canArrive: (o, sp = Timing.speed()) => Timing.elapsed(o, sp) >= Timing.unlockSec(o),
+  defEta: d => CONFIG.etaOptions.reduce((p, c) => Math.abs(c - d * 2.4) < Math.abs(p - d * 2.4) ? c : p)
+};
+
+/* ---------- 6. Геосервіс (карти). Без інтернету працює тестовий розрахунок ---------- */
+const Geo = {
+  async json(url) { const r = await fetch(url); if (!r.ok) throw new Error(r.status); return r.json(); },
+  async reverse(p) {
+    const d = await this.json("https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=uk&lat=" + p.lat + "&lon=" + p.lon);
+    const a = d.address || {};
+    const street = a.road || a.pedestrian || a.footway || "", house = a.house_number || "", city = a.city || a.town || a.village || "";
+    return [[street, house].filter(Boolean).join(" "), city].filter(Boolean).join(", ");
+  },
+  async search(text, near) {
+    const base = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=uk&q=" + encodeURIComponent(text);
+    const tries = near ? [base + "&viewbox=" + (near.lon - 0.3) + "," + (near.lat + 0.3) + "," + (near.lon + 0.3) + "," + (near.lat - 0.3) + "&bounded=1", base] : [base];
+    for (const u of tries) {
+      const r = await this.json(u);
+      if (r.length) return {lat: +r[0].lat, lon: +r[0].lon};
+      await new Promise(s => setTimeout(s, 1000));
+    }
+    return null;
+  },
+  async route(a, b) {
+    try { return (await this.json("https://router.project-osrm.org/route/v1/driving/" + a.lon + "," + a.lat + ";" + b.lon + "," + b.lat + "?overview=false")).routes[0].distance / 1000; }
+    catch (e) { return roadKm(a, b); }
+  },
+  pseudo(text, a) {                     // тестова точка призначення за текстом адреси (лише офлайн-режим)
+    let h = 0; for (const c of text) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    const d = 2 + (h % 700) / 100, ang = (h % 360) * rad;
+    return {lat: a.lat + d * Math.cos(ang) / 111, lon: a.lon + d * Math.sin(ang) / (111 * Math.cos(a.lat * rad))};
+  },
+  async quote(fromText, toText, fromPoint) {
+    try {
+      const a = fromPoint || await this.search(fromText);
+      if (!a) return {error: "pickup"};
+      const b = await this.search(toText, a);
+      if (!b) return {error: "dest"};
+      return {a, km: await this.route(a, b)};
+    } catch (e) {
+      if (!CONFIG.offlineFallback) return {error: "network"};
+      const a = fromPoint || Store.get().loc;
+      return {a, km: roadKm(a, this.pseudo(toText, a)), offline: true};
+    }
+  }
+};
+
+/* ---------- 7. Бізнес-логіка замовлень (єдина точка змін стану) ---------- */
+const STATUS = {search: ["🔎 Пошук водія", "#e08a00"], accepted: ["🚖 Водій їде", "#2481cc"], arrived: ["✅ Водій приїхав", "#2e9d57"],
+  ride: ["🚕 В дорозі", "#2481cc"], done: ["🏁 Завершено", "#2e9d57"], cancelled: ["❌ Скасовано", "#d93025"]};
+// Статуси з точки зору водія
+const DSTATUS = {accepted: ["🚗 Подача авто", "#2481cc"], arrived: ["⚙️ Виконання", "#2e9d57"], ride: ["⚙️ Виконання", "#2e9d57"]};
+const STREETS = ["вул. Робоча", "просп. Дмитра Яворницького", "вул. Європейська", "просп. Слобожанський", "вул. Набережна Перемоги", "вул. Паторжинського", "вул. Гмирі", "просп. Героїв", "вул. Калинова", "вул. Чернишевського"];
+const NAMES = ["Олена", "Андрій", "Марія", "Дмитро", "Ірина", "Сергій", "Наталя", "Віктор", "Катерина", "Максим"];
+const offsetPoint = (p, kmMin, kmMax) => {
+  const d = rnd(kmMin, kmMax), ang = rnd(0, 2 * Math.PI);
+  return {lat: p.lat + d * Math.cos(ang) / 111, lon: p.lon + d * Math.sin(ang) / (111 * Math.cos(p.lat * rad))};
+};
+
+const Orders = {
+  isActive: o => ["search", "accepted", "arrived", "ride"].includes(o.status),
+  mineActive(s) { return s.orders.find(o => o.mine && this.isActive(o)); },
+  driverActive(s) { return s.orders.find(o => o.driver && ["accepted", "arrived", "ride"].includes(o.status)); },
+  air(s) { return s.orders.filter(o => o.status === "search"); },
+  allowed: role => Session.demo || Session.role === role,   // розмежування ролей (на сервері буде за Telegram ID)
+
+  async create(d) {
+    if (!this.allowed("pass")) return {error: "role"};
+    return Store.update(s => {
+      if (this.mineActive(s)) return {error: "active"};
+      s.orders.push({id: s.seq++, mine: true, client: {name: TG.name, phone: "+380 50 111 22 33"},
+        from: {text: d.from, lat: d.lat, lon: d.lon}, to: {text: d.to}, km: d.km, price: d.price, status: "search", created: Date.now()});
+      return {ok: true};
+    });
+  },
+  async accept(id, eta) {
+    if (!this.allowed("drv")) return {error: "role"};
+    return Store.update(s => {
+      const o = s.orders.find(x => x.id === id);
+      if (!o || o.status !== "search") return {error: "taken"};
+      if (this.driverActive(s)) return {error: "busy"};
+      Object.assign(o, {status: "accepted", eta, acceptedAt: Date.now(), driver: Object.assign({}, s.driver)});
+      return {ok: true};
+    });
+  },
+  async advance(id) {                    // «На місці» → почати поїздку → завершити
+    if (!this.allowed("drv")) return {error: "role"};
+    return Store.update(s => {
+      const o = s.orders.find(x => x.id === id);
+      if (!o) return {error: "none"};
+      if (o.status === "accepted" && Timing.canArrive(o, s.speed)) o.status = "arrived";
+      else if (o.status === "arrived") { o.status = "ride"; o.startedAt = Date.now(); }
+      else if (o.status === "ride" && Timing.rideLeft(o, s.speed) <= 0) { o.status = "done"; o.doneAt = Date.now(); }
+      else return {error: "not_ready"};
+      return {ok: true};
+    });
+  },
+  async cancel(id) {
+    return Store.update(s => {
+      const o = s.orders.find(x => x.id === id);
+      if (!o || !this.isActive(o)) return {error: "none"};
+      if (o.status === "ride") return {error: "ride"};
+      o.status = "cancelled";
+      return {ok: true};
+    });
+  },
+  async addFake(n) {                     // тестові замовлення інших пасажирів (лише для розробки)
+    return Store.update(s => {
+      for (let i = 0; i < n; i++) {
+        const a = offsetPoint(s.loc, 0.4, 5), b = offsetPoint(a, 2, 12), km = roadKm(a, b), id = s.seq++;
+        s.orders.push({id, mine: false, client: {name: pick(NAMES), phone: "+380 00 000 00 " + String(id % 100).padStart(2, "0")},
+          from: {text: pick(STREETS) + " " + Math.floor(rnd(1, 120)), lat: a.lat, lon: a.lon},
+          to: {text: pick(STREETS) + " " + Math.floor(rnd(1, 120))}, km: Math.round(km * 10) / 10, price: Tariff.price(km), status: "search", created: Date.now()});
+      }
+      return {ok: true};
+    });
+  },
+  setSpeed: v => Store.update(s => { s.speed = v; }),
+  setLoc: p => Store.update(s => { s.loc = {lat: p.lat, lon: p.lon, real: true}; }),
+  setDriver: (k, v) => Store.update(s => { s.driver[k] = v; }),
+  reset: () => Store.update(s => { Object.assign(s, LocalStore._default()); })
+};
+
+/* ---------- 8. Екрани ---------- */
+const badge = st => `<span class="badge" style="background:${STATUS[st][1]}">${STATUS[st][0]}</span>`;
+const dbadge = st => `<span class="badge" style="background:${DSTATUS[st][1]}">${DSTATUS[st][0]}</span>`;
+const timerBox = (left, total) => `<div class="timer" id="cd">${fmtT(left)}</div><div class="bar"><i id="bar" style="width:${Math.min(100, 100 - 100 * left / total)}%"></i></div>`;
+const orderCard = o => `<div class="card"><div class="lbl">📍 Звідки</div><div class="val">${esc(o.from.text)}</div>
+  <div class="lbl">🏁 Куди</div><div class="val">${esc(o.to.text)}</div>
+  <div class="row2"><span>📏 <b>${fmtKm(o.km)}</b></span><span class="big">${o.price} грн</span></div></div>`;
+const speedChips = s => CONFIG.speedOptions.map(v => `<button class="chip ${s.speed === v ? "on" : ""}" onclick="A.setSpeed(${v})">×${v}</button>`).join("");
+
+const PassengerViews = {
+  tabs: [["order", "📝", "Замовити"], ["trip", "🚕", "Моя поїздка"], ["hist", "🕘", "Історія"]],
+  trip(s) {
+    const o = Orders.mineActive(s);
+    if (!o) {
+      const last = s.orders.filter(x => x.mine).slice(-1)[0];
+      const fin = last && last.status === "done" ? `<div class="card okcard"><div class="big">🏁 Поїздку завершено</div>
+        <div class="lbl">Дякуємо, що обрали Webster Taxi!</div><div class="row2" style="margin-top:6px"><span>Вартість</span><b>${last.price} грн</b></div></div>` : "";
+      return fin + `<div class="empty">Активних поїздок немає.<br>Створіть замовлення на вкладці «Замовити».</div>`;
+    }
+    let head, cls = "";
+    if (o.status === "search") head = `<div class="big">🔎 Шукаємо водія…</div><div class="lbl">Ваше замовлення в ефірі, водії його бачать</div>`;
+    else if (o.status === "accepted") {
+      const t = Timing.arrLeft(o);
+      head = `<div class="big">🚖 Водій їде до Вас</div><div class="lbl" id="etaTxt">${t > 0 ? "Приїде приблизно через <b>" + Math.ceil(t / 60) + " хв</b>" : "Водій вже майже на місці"}</div>${timerBox(t, o.eta * 60)}`;
+    } else if (o.status === "arrived") { head = `<div class="big">✅ Водій приїхав!</div><div class="lbl">Виходьте, автомобіль чекає</div>`; cls = "okcard"; }
+    else head = `<div class="big">🚕 Ви в дорозі</div><div class="lbl">До місця призначення залишилось:</div>${timerBox(Timing.rideLeft(o), Timing.rideMin(o) * 60)}`;
+    const d = o.driver ? `<div class="card"><div class="lbl">Водій</div><div class="val">${esc(o.driver.name)}</div>
+      <div class="lbl">Авто</div><div class="val">${esc(o.driver.car)}, ${esc(o.driver.color)}</div>
+      <div class="lbl">Номер авто</div><div class="val">${esc(o.driver.plate)}</div>
+      <a class="btn green" href="${telHref(o.driver.phone)}">📞 Зателефонувати водієві</a></div>` : "";
+    const c = ["search", "accepted"].includes(o.status) ? `<button class="btn red" onclick="A.cancel(${o.id})">Скасувати замовлення</button>` : "";
+    return `<div class="card ${cls}">${head}</div>${d}${orderCard(o)}${c}`;
+  },
+  hist(s) {
+    const l = s.orders.filter(o => o.mine && !Orders.isActive(o)).reverse();
+    if (!l.length) return `<div class="empty">Історія поїздок поки порожня.</div>`;
+    return l.map(o => `<div class="card"><div class="row2">${badge(o.status)}<span class="lbl">${hhmm(o.created)}</span></div>
+      <div class="val" style="margin-top:6px">${esc(o.from.text)} → ${esc(o.to.text)}</div>
+      <div class="lbl">${fmtKm(o.km)} · ${o.price} грн</div></div>`).join("");
+  }
+};
+
+const DriverViews = {
+  tabs: [["air", "📡", "Ефір"], ["mine", "🚖", "Мої поїздки"], ["prof", "👤", "Профіль"]],
+  air(s) {
+    const l = Orders.air(s).map(o => ({o, d: roadKm(s.loc, o.from)})).sort((a, b) => a.d - b.d);
+    const busy = !!Orders.driverActive(s);
+    let h = `<div class="row2" style="margin-bottom:6px"><b>Ефір: ${l.length}</b>
+      <span class="half" style="gap:6px"><button class="btn sec" style="padding:5px 10px;font-size:13px;margin:0" onclick="A.addFake(1)">＋ Тест</button><button class="btn sec" style="padding:5px 10px;font-size:13px;margin:0" onclick="A.addFake(2)">＋ Два</button></span></div>`;
+    if (!l.length) h += `<div class="empty">Вільних замовлень немає.<br>Додайте тестові кнопками вище<br>або створіть замовлення як пасажир.</div>`;
+    // Ім'я клієнта в ефірі не показуємо: воно з'являється в картці прийнятого замовлення («Мої поїздки»)
+    return h + l.map(({o, d}) => {
+      const eta = UI.etaSel[o.id] || Timing.defEta(d);
+      return `<div class="card ac">
+        <div class="top2"><div class="addr"><div class="a">📍 <b>${esc(o.from.text)}</b></div><div class="a">🏁 <b>${esc(o.to.text)}</b></div></div>
+          <div class="pr"><div class="big">${o.price} грн</div><div class="dd">🚗 Подача: ${num1(d)} км</div><div class="dd">🏁 Поїздка: ${num1(o.km)} км</div></div></div>
+        <div class="eta"><span class="lbl">Подача, хв</span><div class="chips">${CONFIG.etaOptions.map(m => `<button class="chip ${eta === m ? "on" : ""}" onclick="A.setEta(${o.id},${m})">${m}</button>`).join("")}</div></div>
+        <button class="btn" ${busy ? "disabled" : ""} onclick="A.accept(${o.id})">${busy ? "Спочатку завершіть поточну поїздку" : "✅ Прийняти замовлення"}</button></div>`;
+    }).join("");
+  },
+  mine(s) {
+    const a = Orders.driverActive(s);
+    let h = "";
+    if (a) {
+      let act;
+      if (a.status === "accepted") {
+        const t = Timing.arrLeft(a), ok = Timing.canArrive(a);
+        act = `<div class="lbl">Їдете до клієнта, клієнт чекає</div>${timerBox(t, a.eta * 60)}
+          <button class="btn green ${ok ? "glow" : ""}" ${ok ? "" : "disabled"} onclick="A.advance(${a.id})">📍 На місці</button>
+          <div class="lbl" style="text-align:center;margin-top:6px">Кнопка стане активною через ${Timing.unlockSec(a) / 60} хв після початку подачі</div>`;
+      } else if (a.status === "arrived") act = `<button class="btn green glow" onclick="A.advance(${a.id})">▶ Почати поїздку</button>`;
+      else {
+        const t = Timing.rideLeft(a);
+        act = `<div class="lbl">До місця призначення залишилось:</div>${timerBox(t, Timing.rideMin(a) * 60)}
+          <button class="btn green ${t <= 0 ? "glow" : ""}" ${t > 0 ? "disabled" : ""} onclick="A.advance(${a.id})">🏁 Завершити поїздку</button>`;
+      }
+      h += `<div class="card"><div class="row2">${dbadge(a.status)}<span class="lbl">подача ~${a.eta} хв</span></div>
+        <div class="lbl" style="margin-top:8px">Клієнт</div><div class="val">${esc(a.client.name)}</div><a class="btn sec" href="${telHref(a.client.phone)}">📞 Зателефонувати</a></div>
+        <div class="card">${act}</div>${orderCard(a)}`;
+    } else h += `<div class="empty">Активної поїздки немає.<br>Прийміть замовлення на вкладці «Ефір».</div>`;
+    const done = s.orders.filter(o => o.driver && o.status === "done").reverse();
+    h += `<div class="row2" style="margin:14px 0 6px"><b>Історія</b><span class="lbl">${done.length} поїздок · ${done.reduce((x, o) => x + o.price, 0)} грн</span></div>`;
+    return h + done.map(o => `<div class="card"><div class="row2"><b>${esc(o.client.name)}</b><span class="val">${o.price} грн</span></div>
+      <div class="lbl">${esc(o.from.text)} → ${esc(o.to.text)}</div></div>`).join("");
+  },
+  prof(s) {
+    const f = (k, t) => `<label>${t}</label><input value="${esc(s.driver[k])}" onchange="A.setDriver('${k}',this.value)">`;
+    return `<div class="card pf"><div class="row2"><b>Профіль водія</b><span class="badge" style="background:#2e9d57">✅ Підтверджено (демо)</span></div>
+      ${f("name", "Ім'я")}${f("car", "Марка та модель авто")}${f("color", "Колір")}${f("plate", "Державний номер")}${f("phone", "Телефон")}
+      <div class="lbl" style="margin-top:8px">Пізніше ці дані підтягнуться з реєстрації в групі.</div></div>
+      <div class="card"><div class="lbl">Швидкість часу (демо): ×1 це реальний час</div><div class="chips">${speedChips(s)}</div></div>
+      <div class="card"><div class="lbl">Точка для розрахунку відстаней</div><div class="val">${s.loc.real ? "Ваша геолокація" : "Центр Дніпра (демо)"}</div>
+        <button class="btn sec" onclick="A.locate()">📍 Оновити геолокацію</button></div>
+      <button class="btn red" onclick="A.reset()">Скинути демо-дані</button>`;
+  }
+};
+const Views = {pass: PassengerViews, drv: DriverViews};
+
+/* ---------- 9. Інтерфейс: відмальовування і таймер ---------- */
+const UI = {
+  etaSel: {}, from: null, result: null, lastKey: "",
+  inForm: () => Session.role === "pass" && Session.tab.pass === "order",
+  safe() { return !this.inForm() && Session.tab[Session.role] !== "prof"; },
+  render() {
+    const s = Store.get(), V = Views[Session.role], cur = Session.tab[Session.role];
+    if (Session.demo) {
+      $("demoBar").style.display = "block";
+      $("seg").innerHTML = [["pass", "🧍 Пасажир"], ["drv", "🚖 Водій"]].map(([r, t]) => `<button class="${Session.role === r ? "on" : ""}" onclick="A.setRole('${r}')">${t}</button>`).join("");
+      $("spd").innerHTML = speedChips(s);
+    }
+    const air = Orders.air(s).length;
+    $("tabs").innerHTML = V.tabs.map(([k, ic, t]) => `<button class="${cur === k ? "on" : ""}" onclick="A.setTab('${k}')"><span class="ic">${ic}</span>${t}${k === "air" && air ? " (" + air + ")" : ""}</button>`).join("");
+    $("orderForm").style.display = this.inForm() ? "block" : "none";
+    $("view").innerHTML = this.inForm() ? "" : V[cur](s);
+  },
+  tick() {                               // раз на секунду: оновлює лише цифри і смужку, не чіпає кнопки
+    const s = Store.get(), o = Session.role === "pass" ? Orders.mineActive(s) : Orders.driverActive(s);
+    let key = o ? o.status : "";
+    if (o && (o.status === "accepted" || o.status === "ride")) {
+      const left = o.status === "accepted" ? Timing.arrLeft(o) : Timing.rideLeft(o);
+      const total = o.status === "accepted" ? o.eta * 60 : Timing.rideMin(o) * 60;
+      if (o.status === "accepted" ? Timing.canArrive(o) : left <= 0) key += "!";
+      const e = $("cd"), b = $("bar"), t = $("etaTxt");
+      if (e && left > 0) e.textContent = fmtT(left);
+      if (b) b.style.width = Math.min(100, 100 - 100 * left / total) + "%";
+      if (t && left > 0) t.innerHTML = "Приїде приблизно через <b>" + Math.ceil(left / 60) + " хв</b>";
+    }
+    if (key !== this.lastKey) { this.lastKey = key; if (this.safe()) this.render(); }
+  }
+};
+
+/* ---------- 10. Дії користувача ---------- */
+const ALREADY = "Ви вже замовили таксі. Можливість замовити наступну поїздку з'явиться після завершення поточної поїздки чи поточного замовлення.";
+const A = {
+  setRole(r) { Session.role = r; UI.render(); },
+  setTab(k) { Session.tab[Session.role] = k; UI.render(); window.scrollTo(0, 0); },
+  setEta(id, m) { UI.etaSel[id] = m; UI.render(); },
+  async accept(id) {
+    const s = Store.get(), o = s.orders.find(x => x.id === id);
+    const eta = UI.etaSel[id] || (o ? Timing.defEta(roadKm(s.loc, o.from)) : 5);
+    const r = await Orders.accept(id, eta);
+    if (r.ok) Session.tab.drv = "mine";
+    UI.render();
+  },
+  async advance(id) { await Orders.advance(id); UI.render(); },
+  async cancel(id) { await Orders.cancel(id); UI.render(); },
+  async addFake(n) { await Orders.addFake(n); },
+  async setSpeed(v) { await Orders.setSpeed(v); UI.render(); },
+  async setDriver(k, v) { await Orders.setDriver(k, v); },
+  async reset() { if (confirm("Скинути всі демо-дані?")) { await Orders.reset(); UI.render(); } },
+  locate() {
+    const hint = $("fromHint");
+    hint.textContent = "Визначаємо ваше місцезнаходження…";
+    if (!navigator.geolocation) { hint.textContent = "Геолокація недоступна — введіть адресу вручну"; return; }
+    navigator.geolocation.getCurrentPosition(async p => {
+      UI.from = {lat: p.coords.latitude, lon: p.coords.longitude};
+      await Orders.setLoc(UI.from);
+      if (Session.tab[Session.role] === "prof") UI.render();
+      try { $("from").value = await Geo.reverse(UI.from); hint.textContent = "Визначено за геолокацією"; }
+      catch (e) { hint.textContent = "Координати отримано, адресу не визначено — введіть вручну"; }
+    }, () => { hint.textContent = "Не вдалося визначити місце — введіть адресу вручну"; }, {enableHighAccuracy: true, timeout: 15000});
+  },
+  async calc() {
+    if (Orders.mineActive(Store.get())) { notify(ALREADY); return; }
+    const fromText = $("from").value.trim(), toText = $("to").value.trim();
+    $("err").textContent = ""; $("res").style.display = "none";
+    if (!fromText || !toText) { $("err").textContent = "Введіть обидві адреси."; return; }
+    $("calcBtn").disabled = true; $("calcBtn").textContent = "⏳ Секундочку, рахуємо вартість поїздки…";
+    const q = await Geo.quote(fromText, toText, UI.from);
+    if (q.error === "pickup") $("err").textContent = "⚠️ Можливо, адреси подачі не існує.";
+    else if (q.error === "dest") $("err").textContent = "⚠️ Можливо, такої адреси не існує. Перевірте та спробуйте ще раз.";
+    else if (q.error) $("err").textContent = "Не вдалося розрахувати. Перевірте інтернет і спробуйте ще раз.";
+    else {
+      const km = Math.round(q.km * 10) / 10;
+      UI.result = {from: fromText, to: toText, km, price: Tariff.price(q.km), lat: q.a.lat, lon: q.a.lon};
+      $("price").textContent = "~" + UI.result.price + " грн";
+      $("dist").textContent = "Відстань: ~" + km + " км" + (q.offline ? " · тестовий розрахунок без інтернету" : "");
+      $("res").style.display = "block";
+      $("res").scrollIntoView({behavior: "smooth", block: "end"});
+    }
+    $("calcBtn").disabled = false; $("calcBtn").textContent = "Розрахувати вартість";
+  },
+  async order() {
+    if (!UI.result) return;
+    const r = await Orders.create(UI.result);
+    if (r.error === "active") { notify(ALREADY); return; }
+    if (r.ok) { UI.result = null; $("res").style.display = "none"; $("to").value = ""; }
+    Session.tab.pass = "trip"; UI.render(); window.scrollTo(0, 0);
+  }
+};
+
+/* ---------- 11. Запуск ---------- */
+Store.init();
+Store.subscribe(() => { if (UI.safe()) UI.render(); });
+$("from").addEventListener("input", () => { UI.from = null; $("fromHint").textContent = ""; });
+setInterval(() => UI.tick(), 1000);
+UI.render();
+A.locate();
+</script>
+</body>
+</html>
